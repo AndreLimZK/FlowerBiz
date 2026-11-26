@@ -1,6 +1,7 @@
 "use client";
 
 import { devColourName, devFlowerProduct, DEV_FLOWER_PRODUCTS } from "@/data/flowers";
+import { isSoldOut, useFlowerQuantities } from "@/lib/flowerQuantities";
 import { useBouquetStore } from "@/stores/bouquetStore";
 
 function FlowerSwatch({ productId }: { productId: string }) {
@@ -90,6 +91,7 @@ export function FlowerLibrary() {
   const selectedInstanceId = useBouquetStore((state) => state.selectedInstanceId);
   const addFlower = useBouquetStore((state) => state.addFlower);
   const selectFlower = useBouquetStore((state) => state.selectFlower);
+  const quantities = useFlowerQuantities();
 
   return (
     <section
@@ -102,28 +104,36 @@ export function FlowerLibrary() {
         swatch, not a photograph.
       </p>
       <ul className="mt-6 space-y-3">
-        {DEV_FLOWER_PRODUCTS.filter((product) => product.enabled).map((product) => (
-          <li key={product.id}>
-            <button
-              type="button"
-              className={`${cardClassName} border-line hover:bg-studio`}
-              aria-label={`Add ${product.name}`}
-              onClick={() => addFlower(product.id)}
-            >
-              <FlowerSwatch productId={product.id} />
-              <span>
-                <span className="block text-sm text-ink">{product.name}</span>
-                <span className="mt-0.5 block text-xs text-muted">
-                  {product.id === "dev-missing-model"
-                    ? "Missing file"
-                    : product.modelUrl.trim()
-                      ? "Test model"
-                      : "Development swatch"}
+        {DEV_FLOWER_PRODUCTS.filter((product) => product.enabled).map((product) => {
+          const soldOut = isSoldOut(quantities, product.id, product.availableColours[0]);
+          return (
+            <li key={product.id}>
+              <button
+                type="button"
+                className={`${cardClassName} border-line ${soldOut ? "cursor-not-allowed" : "hover:bg-studio"}`}
+                aria-label={soldOut ? `${product.name}, sold out` : `Add ${product.name}`}
+                aria-disabled={soldOut}
+                disabled={soldOut}
+                onClick={() => {
+                  if (soldOut) return;
+                  addFlower(product.id);
+                }}
+              >
+                <FlowerSwatch productId={product.id} />
+                <span>
+                  <span className="block text-sm text-ink">{product.name}</span>
+                  {soldOut ? (
+                    <span className="mt-0.5 block text-xs font-medium text-ink">Sold out</span>
+                  ) : (
+                    <span className="mt-0.5 block text-xs text-muted">
+                      {product.modelUrl.trim() ? "Test model" : "Development swatch"}
+                    </span>
+                  )}
                 </span>
-              </span>
-            </button>
-          </li>
-        ))}
+              </button>
+            </li>
+          );
+        })}
       </ul>
       <div className="mt-8 flex min-h-0 flex-1 flex-col">
         <h3 className="text-[0.7rem] font-medium tracking-[0.18em] text-muted uppercase">Placed</h3>

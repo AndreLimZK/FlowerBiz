@@ -1,6 +1,7 @@
 "use client";
 
 import { devFlowerProduct } from "@/data/flowers";
+import { getFlowerQuantities, isSoldOut } from "@/lib/flowerQuantities";
 import {
   DEV_DEFAULT_RIBBON_ID,
   DEV_DEFAULT_STEM_OPTION_ID,
@@ -372,6 +373,7 @@ export const useBouquetStore = create<BouquetStore>()((set, get) => ({
   addFlower: (productId, colourId) => {
     const resolvedColourId = resolveColourId(productId, colourId);
     if (!resolvedColourId) return null;
+    if (isSoldOut(getFlowerQuantities(), productId, resolvedColourId)) return null;
 
     const instanceId = crypto.randomUUID();
     commit(
@@ -442,6 +444,7 @@ export const useBouquetStore = create<BouquetStore>()((set, get) => ({
   duplicateFlower: (instanceId) => {
     const source = get().configuration.flowers.find((flower) => flower.instanceId === instanceId);
     if (!source) return null;
+    if (isSoldOut(getFlowerQuantities(), source.productId, source.colourId)) return null;
 
     const duplicateId = crypto.randomUUID();
     commit(

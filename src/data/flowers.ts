@@ -8,7 +8,8 @@ import type { FlowerColourVariant, FlowerProduct } from "@/types/flower";
  *
  * A modelUrl is a site path such as `/models/flowers/<product-id>/<colour-id>.glb`.
  * Colour variants that need their own file set modelUrl on the colour. The
- * bouquet stores the ids only.
+ * bouquet stores the ids only. How many of each colour are in stock lives in
+ * `src/lib/flowerQuantities.ts`, not on the product.
  */
 export const DEV_FLOWER_PRODUCTS: readonly FlowerProduct[] = [
   {
@@ -44,8 +45,8 @@ export const DEV_FLOWER_PRODUCTS: readonly FlowerProduct[] = [
   {
     id: "dev-missing-model",
     name: "Missing model",
-    description: "Development stand-in. The model file is intentionally absent.",
-    modelUrl: "/models/dev/missing-flower.glb",
+    description: "Development stand-in. The dev quantity table lists this colour as zero.",
+    modelUrl: "",
     thumbnailUrl: "",
     availableColours: ["dev-missing-model-none"],
     basePrice: 0,
@@ -63,12 +64,7 @@ export const DEV_FLOWER_COLOURS: readonly FlowerColourVariant[] = [
     modelUrl: "/models/dev/stem-test.glb",
     materialKey: "dev-plain",
   },
-  {
-    id: "dev-missing-model-none",
-    name: "None",
-    modelUrl: "/models/dev/missing-flower.glb",
-    materialKey: "",
-  },
+  { id: "dev-missing-model-none", name: "None", modelUrl: "", materialKey: "" },
 ];
 
 export function devFlowerProduct(productId: string): FlowerProduct | undefined {

@@ -5,6 +5,7 @@ import { Canvas, type ThreeEvent } from "@react-three/fiber";
 import { Component, memo, Suspense, type ReactNode } from "react";
 import { FlowerModel, preloadFlowerModel } from "@/components/editor/FlowerModel";
 import { devFlowerMaterialKey, devFlowerModelUrl } from "@/data/flowers";
+import { isSoldOut, useFlowerQuantities } from "@/lib/flowerQuantities";
 import { useBouquetStore } from "@/stores/bouquetStore";
 import type { BouquetFlower } from "@/types/bouquet";
 
@@ -72,12 +73,14 @@ function isClick(event: ThreeEvent<MouseEvent>) {
 const PlacedFlower = memo(function PlacedFlower({
   flower,
   selected,
+  soldOut,
 }: {
   flower: BouquetFlower;
   selected: boolean;
+  soldOut: boolean;
 }) {
   const selectFlower = useBouquetStore((state) => state.selectFlower);
-  const modelUrl = devFlowerModelUrl(flower.productId, flower.colourId);
+  const modelUrl = soldOut ? undefined : devFlowerModelUrl(flower.productId, flower.colourId);
   const materialKey = devFlowerMaterialKey(flower.colourId);
 
   const selectThisFlower = (event: ThreeEvent<MouseEvent>) => {
@@ -107,21 +110,23 @@ const PlacedFlower = memo(function PlacedFlower({
         }}
         onClick={selectThisFlower}
       >
-        <SceneErrorBoundary
-          key={`${flower.instanceId}:${modelUrl ?? "procedural"}`}
-          logLabel="Flower model failed"
-          fallback={<ModelNotice message="This flower could not be loaded." />}
-        >
-          <Suspense fallback={<ModelNotice message="Loading flower…" />}>
-            <FlowerModel
-              modelUrl={modelUrl}
-              productId={flower.productId}
-              colourId={flower.colourId}
-              materialKey={materialKey}
-              selected={selected}
-            />
-          </Suspense>
-        </SceneErrorBoundary>
+        {soldOut ? null : (
+          <SceneErrorBoundary
+            key={`${flower.instanceId}:${modelUrl ?? "procedural"}`}
+            logLabel="Flower model failed"
+            fallback={<ModelNotice message="This flower could not be loaded." />}
+          >
+            <Suspense fallback={<ModelNotice message="Loading flower…" />}>
+              <FlowerModel
+                modelUrl={modelUrl}
+                productId={flower.productId}
+                colourId={flower.colourId}
+                materialKey={materialKey}
+                selected={selected}
+              />
+            </Suspense>
+          </SceneErrorBoundary>
+        )}
         {selected ? (
           <mesh position={[0, 0.3, 0]}>
             <torusGeometry args={[0.072, 0.0035, 8, 40]} />
@@ -141,15 +146,22 @@ const PlacedFlower = memo(function PlacedFlower({
 function PlacedFlowers() {
   const flowers = useBouquetStore((state) => state.configuration.flowers);
   const selectedInstanceId = useBouquetStore((state) => state.selectedInstanceId);
+  const quantities = useFlowerQuantities();
   const modelUrls = new Set<string>();
   for (const flower of flowers) {
+    if (isSoldOut(quantities, flower.productId, flower.colourId)) continue;
     const modelUrl = devFlowerModelUrl(flower.productId, flower.colourId);
     if (modelUrl) modelUrls.add(modelUrl);
   }
   for (const modelUrl of modelUrls) preloadFlowerModel(modelUrl);
 
   return flowers.map((flower) => (
-    <PlacedFlower key={flower.instanceId} flower={flower} selected={flower.instanceId === selectedInstanceId} />
+    <PlacedFlower
+      key={flower.instanceId}
+      flower={flower}
+      selected={flower.instanceId === selectedInstanceId}
+      soldOut={isSoldOut(quantities, flower.productId, flower.colourId)}
+    />
   ));
 }
 
