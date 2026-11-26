@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), Georgia, "Times New Roman", serif;
+  --color-studio: #f3efe8;
+  --color-ink: #2c2824;
+  --color-muted: #6f685f;
+  --color-sage: #66725c;
+  --color-panel: #fffcf8;
+  --color-line: #e4dcd0;
+}
