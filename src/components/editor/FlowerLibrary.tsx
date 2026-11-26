@@ -4,6 +4,40 @@ import { devColourName, devFlowerProduct, DEV_FLOWER_PRODUCTS } from "@/data/flo
 import { useBouquetStore } from "@/stores/bouquetStore";
 
 function FlowerSwatch({ productId }: { productId: string }) {
+  if (productId === "dev-stem-test" || productId === "dev-missing-model") {
+    const missing = productId === "dev-missing-model";
+    return (
+      <svg
+        viewBox="0 0 64 64"
+        aria-hidden="true"
+        className="h-14 w-14 shrink-0 rounded-2xl border border-line bg-[#f6f1ea]"
+      >
+        {missing ? (
+          <>
+            <circle cx="32" cy="26" r="12" fill="none" stroke="#a33b52" strokeWidth="1.5" />
+            <path d="M24 18 L40 34" stroke="#a33b52" strokeWidth="1.5" />
+          </>
+        ) : (
+          <>
+            <rect x="30" y="20" width="4" height="26" rx="2" fill="#4a6342" />
+            <circle cx="32" cy="16" r="8" fill="#c47a86" />
+          </>
+        )}
+        <text
+          x="32"
+          y="56"
+          textAnchor="middle"
+          fontSize="8"
+          letterSpacing="0.12em"
+          fill="#6f685f"
+          fontFamily="ui-sans-serif, system-ui, sans-serif"
+        >
+          DEV
+        </text>
+      </svg>
+    );
+  }
+
   const daisy = productId === "dev-daisy";
   const petal = daisy ? "#f4efe2" : "#c94b63";
   const petalEdge = daisy ? "#d9cbb6" : "#a33b52";
@@ -79,7 +113,13 @@ export function FlowerLibrary() {
               <FlowerSwatch productId={product.id} />
               <span>
                 <span className="block text-sm text-ink">{product.name}</span>
-                <span className="mt-0.5 block text-xs text-muted">Development swatch</span>
+                <span className="mt-0.5 block text-xs text-muted">
+                  {product.id === "dev-missing-model"
+                    ? "Missing file"
+                    : product.modelUrl.trim()
+                      ? "Test model"
+                      : "Development swatch"}
+                </span>
               </span>
             </button>
           </li>

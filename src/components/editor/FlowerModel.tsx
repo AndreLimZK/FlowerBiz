@@ -1,16 +1,37 @@
 "use client";
 
-import { Gltf } from "@react-three/drei";
-import { useMemo } from "react";
+import { useGLTF } from "@react-three/drei";
+import { useEffect, useMemo } from "react";
 import * as THREE from "three";
+import { prepareFlowerInstance } from "@/lib/flowerAssetFrame";
 
 export type FlowerModelProps = {
   /** `.glb` or `.gltf` URL. When omitted, the procedural stand-in is shown. */
   modelUrl?: string;
   productId?: string;
   colourId?: string;
+  /** Approved material name from the catalogue. Never applied as a tint. */
+  materialKey?: string;
   selected?: boolean;
 };
+
+const USE_DRACO = false;
+const USE_MESHOPT = false;
+
+const preloadedFlowerUrls = new Set<string>();
+const reportedFlowerUrls = new Set<string>();
+
+/** Starts one shared glTF load for this URL. Further calls reuse drei's cache. */
+export function preloadFlowerModel(url: string): void {
+  if (!url || preloadedFlowerUrls.has(url)) return;
+  preloadedFlowerUrls.add(url);
+  useGLTF.preload(url, USE_DRACO, USE_MESHOPT);
+}
+
+function useFlowerGltf(url: string) {
+  preloadFlowerModel(url);
+  return useGLTF(url, USE_DRACO, USE_MESHOPT);
+}
 
 type FlowerPalette = {
   stem: string;
@@ -175,7 +196,7 @@ function paletteFor(productId?: string, colourId?: string): { palette: FlowerPal
   return { palette: daisy ? DAISY : ROSE, daisy };
 }
 
-/** Metres, Y up, stem base on the origin. Stand-in until a glTF flower is supplied. */
+/** Metres, Y up, stem base on the origin. About 0.30 m tall, inside the 0.25–0.35 m stem band. */
 function ProceduralFlower({
   productId,
   colourId,
@@ -233,13 +254,44 @@ function ProceduralFlower({
   );
 }
 
-function LoadedFlower({ url }: { url: string }) {
-  return <Gltf src={url} useDraco={false} useMeshOpt={false} />;
+function listedPartNames(object: THREE.Object3D): string {
+  const names: unknown = object.userData.partNames;
+  if (!Array.isArray(names)) return "(none)";
+  const listed = names.filter((name): name is string => typeof name === "string" && name.length > 0);
+  return listed.length > 0 ? listed.join(", ") : "(none)";
 }
 
-export function FlowerModel({ modelUrl, productId, colourId, selected = false }: FlowerModelProps) {
+function LoadedFlower({ url, materialKey }: { url: string; materialKey?: string }) {
+  const gltf = useFlowerGltf(url);
+  const object = useMemo(
+    () => prepareFlowerInstance(gltf.scene, materialKey),
+    [gltf.scene, materialKey],
+  );
+
+  useEffect(() => {
+    if (reportedFlowerUrls.has(url)) return;
+    reportedFlowerUrls.add(url);
+    const materialNote =
+      materialKey && object.userData.materialKeyPresent === false
+        ? ` Material ${materialKey} is not in the file; showing the model as authored.`
+        : materialKey
+          ? ` Material ${materialKey} is in the file.`
+          : "";
+    console.info(`Flower model ${url} parts: ${listedPartNames(object)}.${materialNote}`);
+  }, [materialKey, object, url]);
+
+  return <primitive object={object} />;
+}
+
+export function FlowerModel({
+  modelUrl,
+  productId,
+  colourId,
+  materialKey,
+  selected = false,
+}: FlowerModelProps) {
   if (modelUrl) {
-    return <LoadedFlower url={modelUrl} />;
+    return <LoadedFlower url={modelUrl} materialKey={materialKey} />;
   }
 
   return <ProceduralFlower productId={productId} colourId={colourId} selected={selected} />;

@@ -14,17 +14,20 @@ import { create } from "zustand";
 
 /**
  * The configuration and its undo history are plain JSON: ids, numbers, and strings.
- * Three.js objects, refs, and class instances stay in the scene.
+ * Three.js objects, refs, and class instances stay in the scene. A placed flower
+ * keeps productId and colourId; the scene resolves those to a modelUrl string.
  *
- * Position, rotation, and scale are clamped here. The scene only reads the store,
- * so a flower cannot drift past these limits.
+ * Position is metres from the bouquet origin. Y is up and the bouquet base is
+ * near the origin. Rotation and scale are clamped here. The scene only reads
+ * the store, so a flower cannot drift past these limits.
  */
 
 type Vec3 = BouquetFlower["position"];
 
 /**
- * Position is metres from the bouquet origin. Rotation is radians, about ±π.
- * Scale is uniform-capable but stored per axis, each kept inside 0.4–2.
+ * Position is metres from the bouquet origin (Y up, base near y = 0).
+ * Rotation is radians, about ±π. Scale is uniform-capable but stored per axis,
+ * each kept inside 0.4–2.
  */
 export const FLOWER_TRANSFORM_LIMITS = {
   position: {

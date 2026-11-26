@@ -1,16 +1,17 @@
 "use client";
 
-import { OrbitControls } from "@react-three/drei";
+import { Html, OrbitControls } from "@react-three/drei";
 import { Canvas, type ThreeEvent } from "@react-three/fiber";
 import { Component, memo, Suspense, type ReactNode } from "react";
-import { FlowerModel } from "@/components/editor/FlowerModel";
-import { devFlowerModelUrl } from "@/data/flowers";
+import { FlowerModel, preloadFlowerModel } from "@/components/editor/FlowerModel";
+import { devFlowerMaterialKey, devFlowerModelUrl } from "@/data/flowers";
 import { useBouquetStore } from "@/stores/bouquetStore";
 import type { BouquetFlower } from "@/types/bouquet";
 
 type SceneErrorBoundaryProps = {
   children: ReactNode;
   fallback: ReactNode;
+  logLabel?: string;
 };
 
 type SceneErrorBoundaryState = {
@@ -28,13 +29,23 @@ class SceneErrorBoundary extends Component<SceneErrorBoundaryProps, SceneErrorBo
   }
 
   componentDidCatch(error: Error) {
-    console.error("Bouquet preview failed:", error);
+    console.error(this.props.logLabel ?? "Bouquet preview failed:", error);
   }
 
   render() {
     if (this.state.hasError) return this.props.fallback;
     return this.props.children;
   }
+}
+
+function ModelNotice({ message }: { message: string }) {
+  return (
+    <Html position={[0, 0.16, 0]} center style={{ pointerEvents: "none" }}>
+      <p className="w-56 rounded-xl bg-studio/90 px-3 py-2 text-center text-sm leading-relaxed text-muted">
+        {message}
+      </p>
+    </Html>
+  );
 }
 
 function StudioLighting() {
@@ -66,7 +77,8 @@ const PlacedFlower = memo(function PlacedFlower({
   selected: boolean;
 }) {
   const selectFlower = useBouquetStore((state) => state.selectFlower);
-  const modelUrl = devFlowerModelUrl(flower.productId);
+  const modelUrl = devFlowerModelUrl(flower.productId, flower.colourId);
+  const materialKey = devFlowerMaterialKey(flower.colourId);
 
   const selectThisFlower = (event: ThreeEvent<MouseEvent>) => {
     if (!isClick(event)) return;
@@ -95,12 +107,17 @@ const PlacedFlower = memo(function PlacedFlower({
         }}
         onClick={selectThisFlower}
       >
-        <SceneErrorBoundary fallback={null}>
-          <Suspense fallback={null}>
+        <SceneErrorBoundary
+          key={`${flower.instanceId}:${modelUrl ?? "procedural"}`}
+          logLabel="Flower model failed"
+          fallback={<ModelNotice message="This flower could not be loaded." />}
+        >
+          <Suspense fallback={<ModelNotice message="Loading flower…" />}>
             <FlowerModel
               modelUrl={modelUrl}
               productId={flower.productId}
               colourId={flower.colourId}
+              materialKey={materialKey}
               selected={selected}
             />
           </Suspense>
@@ -124,6 +141,12 @@ const PlacedFlower = memo(function PlacedFlower({
 function PlacedFlowers() {
   const flowers = useBouquetStore((state) => state.configuration.flowers);
   const selectedInstanceId = useBouquetStore((state) => state.selectedInstanceId);
+  const modelUrls = new Set<string>();
+  for (const flower of flowers) {
+    const modelUrl = devFlowerModelUrl(flower.productId, flower.colourId);
+    if (modelUrl) modelUrls.add(modelUrl);
+  }
+  for (const modelUrl of modelUrls) preloadFlowerModel(modelUrl);
 
   return flowers.map((flower) => (
     <PlacedFlower key={flower.instanceId} flower={flower} selected={flower.instanceId === selectedInstanceId} />
@@ -137,6 +160,7 @@ function StudioScene() {
     <>
       <color attach="background" args={["#f4efe8"]} />
       <StudioLighting />
+      {/* Bouquet base: Y up, metres, this plane sits on the origin. */}
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, 0, 0]}
