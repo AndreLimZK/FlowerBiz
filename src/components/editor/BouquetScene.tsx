@@ -2,13 +2,11 @@
 
 import { Html, OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { Component, Suspense, type ReactNode } from "react";
+import { Component, memo, Suspense, type ReactNode } from "react";
 import { FlowerModel } from "@/components/editor/FlowerModel";
-
-export type BouquetSceneProps = {
-  /** Optional `.glb` / `.gltf` URL. Omitted until a flower model is ready. */
-  modelUrl?: string;
-};
+import { devFlowerModelUrl } from "@/data/flowers";
+import { useBouquetStore } from "@/stores/bouquetStore";
+import type { BouquetFlower } from "@/types/bouquet";
 
 type SceneErrorBoundaryProps = {
   children: ReactNode;
@@ -59,7 +57,32 @@ function StudioLighting() {
   );
 }
 
-function StudioScene({ modelUrl }: { modelUrl?: string }) {
+const PlacedFlower = memo(function PlacedFlower({ flower }: { flower: BouquetFlower }) {
+  const modelUrl = devFlowerModelUrl(flower.productId);
+
+  return (
+    <group
+      name={`flower-instance-${flower.instanceId}`}
+      position={[flower.position.x, flower.position.y, flower.position.z]}
+      rotation={[flower.rotation.x, flower.rotation.y, flower.rotation.z]}
+      scale={[flower.scale.x, flower.scale.y, flower.scale.z]}
+    >
+      <SceneErrorBoundary fallback={<ModelNotice message="This flower could not be loaded." />}>
+        <Suspense fallback={<ModelNotice message="Loading flower…" />}>
+          <FlowerModel modelUrl={modelUrl} />
+        </Suspense>
+      </SceneErrorBoundary>
+    </group>
+  );
+});
+
+/** The configuration is the only source of flowers. Nothing else mounts one. */
+function PlacedFlowers() {
+  const flowers = useBouquetStore((state) => state.configuration.flowers);
+  return flowers.map((flower) => <PlacedFlower key={flower.instanceId} flower={flower} />);
+}
+
+function StudioScene() {
   return (
     <>
       <color attach="background" args={["#f4efe8"]} />
@@ -68,13 +91,7 @@ function StudioScene({ modelUrl }: { modelUrl?: string }) {
         <circleGeometry args={[0.09, 40]} />
         <meshBasicMaterial color="#ebe4da" />
       </mesh>
-      <SceneErrorBoundary
-        fallback={<ModelNotice message="The flower model could not be loaded." />}
-      >
-        <Suspense fallback={<ModelNotice message="Loading flower…" />}>
-          <FlowerModel modelUrl={modelUrl} />
-        </Suspense>
-      </SceneErrorBoundary>
+      <PlacedFlowers />
       <OrbitControls
         makeDefault
         enableDamping
@@ -92,7 +109,9 @@ function StudioScene({ modelUrl }: { modelUrl?: string }) {
   );
 }
 
-export function BouquetScene({ modelUrl }: BouquetSceneProps) {
+export function BouquetScene() {
+  const isEmpty = useBouquetStore((state) => state.configuration.flowers.length === 0);
+
   return (
     <section
       aria-label="Bouquet preview"
@@ -122,13 +141,18 @@ export function BouquetScene({ modelUrl }: BouquetSceneProps) {
               camera.lookAt(0, 0.2, 0);
             }}
           >
-            <StudioScene modelUrl={modelUrl} />
+            <StudioScene />
           </Canvas>
         </div>
       </SceneErrorBoundary>
       <h2 className="pointer-events-none absolute top-0 left-0 z-10 px-7 pt-6 text-[0.7rem] font-medium tracking-[0.18em] text-muted uppercase">
         Preview
       </h2>
+      {isEmpty ? (
+        <p className="pointer-events-none absolute inset-x-0 top-[46%] z-10 px-10 text-center text-sm leading-relaxed text-muted">
+          Add a flower from the library. It will appear here.
+        </p>
+      ) : null}
       <p className="pointer-events-none absolute inset-x-0 bottom-5 z-10 text-center text-xs tracking-wide text-muted">
         Drag to turn · scroll to zoom
       </p>
