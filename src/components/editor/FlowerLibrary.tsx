@@ -1,113 +1,124 @@
 "use client";
 
 import { devColourName, devFlowerProduct, DEV_FLOWER_PRODUCTS } from "@/data/flowers";
-import {
-  DEV_DEFAULT_RIBBON_ID,
-  DEV_DEFAULT_STEM_OPTION_ID,
-  DEV_DEFAULT_WRAPPING_ID,
-} from "@/data/options";
 import { useBouquetStore } from "@/stores/bouquetStore";
 
-const buttonClassName =
-  "rounded-full border border-line px-3 py-1.5 text-xs text-ink transition-colors hover:bg-studio focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sage disabled:cursor-not-allowed disabled:opacity-40";
+function FlowerSwatch({ productId }: { productId: string }) {
+  const daisy = productId === "dev-daisy";
+  const petal = daisy ? "#f4efe2" : "#c94b63";
+  const petalEdge = daisy ? "#d9cbb6" : "#a33b52";
+  const centre = daisy ? "#e6b34a" : "#e58b98";
+  const petals = [0, 60, 120, 180, 240, 300];
+
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+      className="h-14 w-14 shrink-0 rounded-2xl border border-line bg-[#f6f1ea]"
+    >
+      {petals.map((angle) => {
+        const radians = (angle * Math.PI) / 180;
+        const cx = 32 + Math.cos(radians) * 11;
+        const cy = 26 + Math.sin(radians) * 11;
+        return (
+          <circle
+            key={angle}
+            cx={cx}
+            cy={cy}
+            r={daisy ? 8 : 6.5}
+            fill={petal}
+            stroke={petalEdge}
+            strokeWidth="1"
+          />
+        );
+      })}
+      <circle cx="32" cy="26" r={daisy ? 5.5 : 4.5} fill={centre} />
+      <text
+        x="32"
+        y="56"
+        textAnchor="middle"
+        fontSize="8"
+        letterSpacing="0.12em"
+        fill="#6f685f"
+        fontFamily="ui-sans-serif, system-ui, sans-serif"
+      >
+        DEV
+      </text>
+    </svg>
+  );
+}
+
+const cardClassName =
+  "flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sage";
 
 export function FlowerLibrary() {
   const flowers = useBouquetStore((state) => state.configuration.flowers);
-  const wrappingId = useBouquetStore((state) => state.configuration.wrappingId);
-  const stemOptionId = useBouquetStore((state) => state.configuration.stemOptionId);
-  const ribbonId = useBouquetStore((state) => state.configuration.ribbonId);
+  const selectedInstanceId = useBouquetStore((state) => state.selectedInstanceId);
   const addFlower = useBouquetStore((state) => state.addFlower);
-  const removeFlower = useBouquetStore((state) => state.removeFlower);
-  const duplicateFlower = useBouquetStore((state) => state.duplicateFlower);
-  const resetBouquet = useBouquetStore((state) => state.resetBouquet);
-  const pristine =
-    flowers.length === 0 &&
-    wrappingId === DEV_DEFAULT_WRAPPING_ID &&
-    stemOptionId === DEV_DEFAULT_STEM_OPTION_ID &&
-    ribbonId === DEV_DEFAULT_RIBBON_ID;
+  const selectFlower = useBouquetStore((state) => state.selectFlower);
 
   return (
     <section
       aria-label="Flower library"
-      className="flex h-full min-h-0 flex-col rounded-[1.75rem] border border-line bg-panel p-7"
+      className="flex h-full min-h-0 flex-col overflow-y-auto rounded-[1.75rem] border border-line bg-panel p-7"
     >
-      <h2 className="text-[0.7rem] font-medium tracking-[0.18em] text-muted uppercase">
-        Flowers
-      </h2>
+      <h2 className="text-[0.7rem] font-medium tracking-[0.18em] text-muted uppercase">Flowers</h2>
       <p className="mt-4 text-sm leading-relaxed text-muted">
-        Development placeholders, until the business confirms the catalogue.
+        Development placeholders, until the business confirms the catalogue. The thumbnail is a drawn
+        swatch, not a photograph.
       </p>
       <ul className="mt-6 space-y-3">
         {DEV_FLOWER_PRODUCTS.filter((product) => product.enabled).map((product) => (
-          <li key={product.id} className="flex items-center justify-between gap-3">
-            <span className="text-sm text-ink">{product.name}</span>
+          <li key={product.id}>
             <button
               type="button"
-              className={buttonClassName}
+              className={`${cardClassName} border-line hover:bg-studio`}
               aria-label={`Add ${product.name}`}
               onClick={() => addFlower(product.id)}
             >
-              Add
+              <FlowerSwatch productId={product.id} />
+              <span>
+                <span className="block text-sm text-ink">{product.name}</span>
+                <span className="mt-0.5 block text-xs text-muted">Development swatch</span>
+              </span>
             </button>
           </li>
         ))}
       </ul>
       <div className="mt-8 flex min-h-0 flex-1 flex-col">
-        <h3 className="text-[0.7rem] font-medium tracking-[0.18em] text-muted uppercase">
-          Placed
-        </h3>
+        <h3 className="text-[0.7rem] font-medium tracking-[0.18em] text-muted uppercase">Placed</h3>
         {flowers.length === 0 ? (
-          <p className="mt-4 text-sm leading-relaxed text-muted">Nothing placed yet.</p>
+          <p className="mt-4 text-sm leading-relaxed text-muted">Nothing placed yet. Click a flower above to add one.</p>
         ) : (
-          <ul className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto">
+          <ul className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto">
             {flowers.map((flower, index) => {
               const product = devFlowerProduct(flower.productId);
               const name = product?.name ?? "Flower";
               const colour = devColourName(flower.colourId);
-              const label = `${name}, flower ${index + 1}`;
+              const selected = flower.instanceId === selectedInstanceId;
               return (
-                <li key={flower.instanceId} className="flex items-start justify-between gap-3">
-                  <span className="text-sm text-ink">
-                    {name}
-                    {colour ? <span className="mt-0.5 block text-xs text-muted">{colour}</span> : null}
-                  </span>
-                  <span className="flex shrink-0 gap-2">
-                    <button
-                      type="button"
-                      className={buttonClassName}
-                      aria-label={`Duplicate ${label}`}
-                      onClick={() => duplicateFlower(flower.instanceId)}
-                    >
-                      Duplicate
-                    </button>
-                    <button
-                      type="button"
-                      className={buttonClassName}
-                      aria-label={`Remove ${label}`}
-                      onClick={() => removeFlower(flower.instanceId)}
-                    >
-                      Remove
-                    </button>
-                  </span>
+                <li key={flower.instanceId}>
+                  <button
+                    type="button"
+                    aria-pressed={selected}
+                    className={`${cardClassName} ${selected ? "border-sage bg-studio" : "border-line hover:bg-studio"}`}
+                    onClick={() => selectFlower(flower.instanceId)}
+                  >
+                    <span className="min-w-0">
+                      <span className="block text-sm text-ink">
+                        {name}
+                        <span className="text-muted"> · {index + 1}</span>
+                      </span>
+                      {colour ? <span className="mt-0.5 block text-xs text-muted">{colour}</span> : null}
+                    </span>
+                    {selected ? <span className="ml-auto shrink-0 text-xs text-sage">Selected</span> : null}
+                  </button>
                 </li>
               );
             })}
           </ul>
         )}
       </div>
-      <button
-        type="button"
-        className={`${buttonClassName} mt-6 self-start`}
-        disabled={pristine}
-        onClick={() => {
-          const confirmed = window.confirm(
-            "Reset this bouquet? Placed flowers are removed, and wrapping, stem, and ribbon return to the development defaults.",
-          );
-          if (confirmed) resetBouquet();
-        }}
-      >
-        Reset bouquet
-      </button>
     </section>
   );
 }

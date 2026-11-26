@@ -21,7 +21,7 @@ export function BouquetOptionsPanel() {
   return (
     <section
       aria-label="Bouquet options"
-      className="flex h-full min-h-0 flex-col overflow-y-auto rounded-[1.75rem] border border-line bg-panel p-7"
+      className="flex shrink-0 flex-col rounded-[1.75rem] border border-line bg-panel p-7"
     >
       <h2 className="text-[0.7rem] font-medium tracking-[0.18em] text-muted uppercase">
         Options
