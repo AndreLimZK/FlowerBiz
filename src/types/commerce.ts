@@ -24,6 +24,13 @@ export type ShopProduct = {
   summary: string;
   /** Text stand-in only. Not a photograph and not an image URL. */
   imageLabel: string;
+  /** Placeholder filter group. Not a confirmed product range. */
+  category?: string;
+  /**
+   * Mock number used only to sort the prototype catalogue.
+   * Not sales, views, or a ranking from the business.
+   */
+  mockPopularity?: number;
 };
 
 export type ShopCartLine = {

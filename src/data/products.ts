@@ -5,6 +5,8 @@ import type { ShopProduct } from "@/types/commerce";
  * Ready-made bouquets for the shop catalogue. Not `DEV_FLOWER_PRODUCTS`.
  * Prices are stand-in amounts, not confirmed business prices.
  * `imageLabel` is text. It is not a photograph and not a picture URL.
+ * `category` is a placeholder filter group, not a confirmed range.
+ * `mockPopularity` is a mock sort key. It is not sales, views, or a ranking from the business.
  */
 export const SHOP_PRODUCTS: readonly ShopProduct[] = [
   {
@@ -15,6 +17,8 @@ export const SHOP_PRODUCTS: readonly ShopProduct[] = [
     enabled: true,
     summary: "Placeholder ready-made bouquet. The business has not confirmed this product.",
     imageLabel: "Placeholder swatch. Not a photograph.",
+    category: "Bunch",
+    mockPopularity: 4,
   },
   {
     id: "shop-cream-posy",
@@ -24,6 +28,8 @@ export const SHOP_PRODUCTS: readonly ShopProduct[] = [
     enabled: true,
     summary: "Placeholder ready-made bouquet. The business has not confirmed this product.",
     imageLabel: "Placeholder swatch. Not a photograph.",
+    category: "Posy",
+    mockPopularity: 2,
   },
   {
     id: "shop-sage-wrap",
@@ -33,6 +39,8 @@ export const SHOP_PRODUCTS: readonly ShopProduct[] = [
     enabled: true,
     summary: "Placeholder ready-made bouquet with no placeholder stock.",
     imageLabel: "Placeholder swatch. Not a photograph.",
+    category: "Bunch",
+    mockPopularity: 3,
   },
   {
     id: "shop-ink-ribbon",
@@ -42,6 +50,8 @@ export const SHOP_PRODUCTS: readonly ShopProduct[] = [
     enabled: false,
     summary: "Placeholder ready-made bouquet, switched off in the prototype catalogue.",
     imageLabel: "Placeholder swatch. Not a photograph.",
+    category: "Posy",
+    mockPopularity: 1,
   },
 ];
 
