@@ -9,6 +9,7 @@ import {
   estimateCustomBouquet,
   priceCart,
 } from "@/lib/pricing";
+import { cartItemCount } from "@/lib/shopCatalogue";
 import { snapshotBouquetConfiguration } from "@/lib/snapshotBouquet";
 import { useCartStore } from "@/stores/cartStore";
 import { useCommerceStore } from "@/stores/commerceStore";
@@ -155,6 +156,42 @@ useCommerceStore.getState().updateProduct(blush.id, { price: blush.price });
 
 assert.equal(useCartStore.getState().addReadyMade("shop-sage-wrap", 1), null);
 assert.equal(useCartStore.getState().addReadyMade("shop-ink-ribbon", 1), null);
+
+useCartStore.getState().clear();
+const stockedId = useCartStore.getState().addReadyMade("shop-blush-bunch", 6);
+assert.ok(stockedId);
+useCartStore.getState().updateQuantity(stockedId, 9);
+const atStock = useCartStore.getState().lines.find((line) => line.id === stockedId);
+assert.ok(atStock && atStock.kind === "shop");
+assert.equal(atStock.quantity, 6);
+useCartStore.getState().updateQuantity(stockedId, 4);
+const reduced = useCartStore.getState().lines.find((line) => line.id === stockedId);
+assert.ok(reduced && reduced.kind === "shop");
+assert.equal(reduced.quantity, 4);
+
+useCartStore.setState({
+  lines: [
+    { id: "disabled-line", kind: "shop" as const, productId: "shop-ink-ribbon", quantity: 2 },
+    { id: "unavailable-line", kind: "shop" as const, productId: "shop-sage-wrap", quantity: 2 },
+    { id: "missing-line", kind: "shop" as const, productId: "shop-missing", quantity: 3 },
+    ...useCartStore.getState().lines,
+  ],
+});
+useCartStore.getState().updateQuantity("disabled-line", 4);
+useCartStore.getState().updateQuantity("unavailable-line", 5);
+useCartStore.getState().updateQuantity("missing-line", 9);
+useCartStore.getState().updateQuantity("missing-line", 1);
+const guarded = useCartStore.getState().lines;
+assert.equal(guarded.find((line) => line.id === "disabled-line")?.quantity, 2);
+assert.equal(guarded.find((line) => line.id === "unavailable-line")?.quantity, 2);
+assert.equal(guarded.find((line) => line.id === "missing-line")?.quantity, 3);
+useCartStore.getState().updateQuantity("disabled-line", 1);
+useCartStore.getState().updateQuantity("unavailable-line", 1);
+assert.equal(useCartStore.getState().lines.find((line) => line.id === "disabled-line")?.quantity, 1);
+assert.equal(useCartStore.getState().lines.find((line) => line.id === "unavailable-line")?.quantity, 1);
+const customStill = useCartStore.getState().addCustomConfiguration(configuration());
+assert.ok(customStill);
+assert.equal(cartItemCount(useCartStore.getState().lines), 1 + 1 + 3 + 4 + 1);
 
 const simulated = paymentStatusAfterSimulation("bank_transfer");
 assert.notEqual(simulated, "paid");

@@ -131,10 +131,13 @@ export const useCartStore = create<CartStore>()(
           return;
         }
         const product = useCommerceStore.getState().products.find((item) => item.id === line.productId);
-        const next = product ? Math.min(quantity, product.stock) : quantity;
-        if (next < 1) {
-          set({ lines: get().lines.filter((item) => item.id !== lineId) });
-          return;
+        // A missing catalogue id stays as stored. Disabled, out of stock, and
+        // already-at-stock lines can decrease, and cannot increase.
+        if (!product) return;
+        let next = quantity;
+        if (quantity > line.quantity) {
+          if (!product.enabled || product.stock < 1 || line.quantity >= product.stock) return;
+          next = Math.min(quantity, product.stock);
         }
         if (next === line.quantity) return;
         set({

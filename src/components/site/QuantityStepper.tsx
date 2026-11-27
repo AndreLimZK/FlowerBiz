@@ -5,18 +5,22 @@ export function QuantityStepper({
   min = 1,
   max,
   onChange,
+  decreaseLabel = "Decrease quantity",
+  increaseLabel = "Increase quantity",
 }: {
   value: number;
   min?: number;
   max: number;
   onChange: (value: number) => void;
+  decreaseLabel?: string;
+  increaseLabel?: string;
 }) {
   return (
     <div className="inline-flex items-center rounded-full border border-line bg-panel">
       <button
         type="button"
         className="px-4 py-2 text-sm text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sage disabled:cursor-not-allowed disabled:opacity-40"
-        aria-label="Decrease quantity"
+        aria-label={decreaseLabel}
         disabled={value <= min}
         onClick={() => onChange(value - 1)}
       >
@@ -28,7 +32,7 @@ export function QuantityStepper({
       <button
         type="button"
         className="px-4 py-2 text-sm text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sage disabled:cursor-not-allowed disabled:opacity-40"
-        aria-label="Increase quantity"
+        aria-label={increaseLabel}
         disabled={value >= max}
         onClick={() => onChange(value + 1)}
       >

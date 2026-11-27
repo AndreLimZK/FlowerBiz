@@ -1,5 +1,6 @@
 "use client";
 
+import { useCommerceHydrated } from "@/components/CommerceHydration";
 import { cartItemCount } from "@/lib/shopCatalogue";
 import { useCartStore } from "@/stores/cartStore";
 import Link from "next/link";
@@ -8,8 +9,10 @@ const navClass =
   "text-sm text-muted underline-offset-4 transition-colors hover:text-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sage";
 
 export function SiteHeader() {
+  const hydrated = useCommerceHydrated();
   const count = useCartStore((state) => cartItemCount(state.lines));
   const itemLabel = count === 1 ? "item" : "items";
+  const cartLabel = hydrated ? `Cart, ${count} ${itemLabel}` : "Cart, loading";
 
   return (
     <header className="shrink-0 border-b border-line">
@@ -27,10 +30,13 @@ export function SiteHeader() {
           <Link href="/customise" className={navClass}>
             Customise
           </Link>
-          <Link href="/cart" className={navClass} aria-label={`Cart, ${count} ${itemLabel}`}>
+          <Link href="/cart" className={navClass} aria-label={cartLabel}>
             Cart
-            <span className="ml-2 inline-flex min-w-6 items-center justify-center rounded-full bg-ink px-1.5 py-0.5 text-xs text-studio tabular-nums">
-              {count}
+            <span
+              aria-live="polite"
+              className="ml-2 inline-flex min-w-6 items-center justify-center rounded-full bg-ink px-1.5 py-0.5 text-xs text-studio tabular-nums"
+            >
+              {hydrated ? count : "…"}
             </span>
           </Link>
         </nav>

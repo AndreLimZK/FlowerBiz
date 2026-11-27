@@ -1,16 +1,17 @@
-import { CartComingNext } from "@/components/shop/CartComingNext";
+import { CartView } from "@/components/shop/CartView";
 import { siteMainClass } from "@/components/site/classes";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Cart",
-  description: "The cart page comes next. Added items stay in this browser.",
+  description:
+    "Review ready-made bouquets and custom designs saved in this browser. Prices and estimates are provisional.",
 };
 
 export default function CartPage() {
   return (
     <main className={siteMainClass}>
-      <CartComingNext />
+      <CartView />
     </main>
   );
 }
