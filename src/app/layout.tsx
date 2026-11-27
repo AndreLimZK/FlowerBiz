@@ -1,3 +1,4 @@
+import { CommerceHydration } from "@/components/CommerceHydration";
 import type { Metadata } from "next";
 import { Figtree, Newsreader } from "next/font/google";
 import Link from "next/link";
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${figtree.variable} ${newsreader.variable} h-full`}
     >
       <body className="h-full bg-studio font-sans text-ink antialiased">
+        <CommerceHydration />
         <div className="flex h-full min-w-[1100px] flex-col">
           <header className="shrink-0 border-b border-line">
             <div className="mx-auto flex h-[4.5rem] w-full max-w-[1440px] items-center justify-between px-10">

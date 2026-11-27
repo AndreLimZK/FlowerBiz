@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:commerce": "node --import ./scripts/register-ts-loader.mjs ./scripts/check-commerce.mts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
